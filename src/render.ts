@@ -134,11 +134,16 @@ export function renderMinimap(
   const px = game.x * cell;
   const py = game.y * cell;
   ctx.strokeStyle = COLORS.mapPlayer;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = Math.max(1, Math.round(cell / 6));
   ctx.beginPath();
   ctx.moveTo(px, py);
   ctx.lineTo(px + Math.cos(game.angle) * cell * 1.7, py + Math.sin(game.angle) * cell * 1.7);
   ctx.stroke();
+  const marker = Math.max(3, Math.round(cell * 0.5));
+  const mx = Math.round(px - marker / 2);
+  const my = Math.round(py - marker / 2);
+  ctx.fillStyle = COLORS.page;
+  ctx.fillRect(mx - 1, my - 1, marker + 2, marker + 2);
   ctx.fillStyle = COLORS.mapPlayer;
-  ctx.fillRect(Math.round(px) - 1, Math.round(py) - 1, 3, 3);
+  ctx.fillRect(mx, my, marker, marker);
 }

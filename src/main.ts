@@ -66,6 +66,7 @@ function layout(): void {
   mapCanvas.width = game.maze.cols * mapCell;
   mapCanvas.height = game.maze.rows * mapCell;
   mapCtx.imageSmoothingEnabled = false;
+  document.documentElement.style.setProperty('--map-w', `${mapCanvas.width}px`);
 }
 
 function clearKeys(): void {

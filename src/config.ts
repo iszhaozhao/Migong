@@ -30,7 +30,7 @@ export const MAX_FRAME_DELTA_MS = 100;
 export const MAX_SUBSTEP_DISTANCE = 0.08;
 
 // 小地图目标 CSS 尺寸（会按窗口适配）
-export const MINIMAP_TARGET_CSS = 180;
+export const MINIMAP_TARGET_CSS = 220;
 
 // 墙体程序化砖纹
 export const BRICK_ROWS = 4;

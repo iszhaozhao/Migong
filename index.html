@@ -24,23 +24,43 @@
         display: flex; align-items: center; justify-content: center;
         font-family: var(--site-font);
       }
-      #view { display: block; background: #000; image-rendering: pixelated; image-rendering: crisp-edges; }
+      #view {
+        display: block; background: #000; image-rendering: pixelated; image-rendering: crisp-edges;
+        outline: 1px solid var(--site-border); box-shadow: 0 0 56px rgba(124, 112, 214, 0.14);
+      }
       #minimap {
-        position: fixed; right: 12px; bottom: 12px; background: #000;
+        position: fixed; right: 16px; bottom: 16px; background: #000;
         border: 1px solid #1c1c26; image-rendering: pixelated;
       }
-      .hud { position: fixed; left: 12px; top: 10px; color: var(--site-muted); font-size: calc(11px * var(--site-type, 1)); letter-spacing: 0.5px; }
+      .hud {
+        position: fixed; left: 16px; top: 14px; display: flex; align-items: center;
+        gap: calc(6px * var(--site-space, 1));
+        height: 30px; padding: 0 calc(12px * var(--site-space, 1)); box-sizing: border-box;
+        background: rgba(10, 10, 18, 0.78); border: 1px solid var(--site-border);
+        color: var(--site-muted); font-size: calc(12px * var(--site-type, 1)); letter-spacing: 0.5px;
+      }
       .hud b { color: var(--site-fg); font-weight: 600; }
-      .controls { position: fixed; right: 12px; top: 10px; display: flex; gap: calc(6px * var(--site-space, 1)); }
+      .controls { position: fixed; right: 16px; top: 14px; display: flex; gap: calc(8px * var(--site-space, 1)); }
       button {
-        font: inherit; font-size: calc(11px * var(--site-type, 1)); color: var(--site-muted); background: var(--site-surface);
+        font: inherit; font-size: calc(12px * var(--site-type, 1)); color: var(--site-muted); background: var(--site-surface);
         border: 1px solid var(--site-border); border-radius: var(--site-radius);
-        padding: calc(4px * var(--site-space, 1)) calc(9px * var(--site-space, 1)); cursor: pointer;
+        height: 30px; padding: 0 calc(12px * var(--site-space, 1)); display: inline-flex; align-items: center; cursor: pointer;
       }
       button:hover { color: var(--site-fg); border-color: #3a3a55; }
       button:focus-visible { outline: 1px solid #8b7ff0; outline-offset: 1px; }
-      .help { position: fixed; left: 12px; bottom: 10px; margin: 0; color: #55516b; font-size: calc(11px * var(--site-type, 1)); }
-      .help b { color: var(--site-muted); font-weight: 600; }
+      .help {
+        position: fixed; left: 16px; bottom: 16px; margin: 0;
+        max-width: max(120px, calc(100vw - var(--map-w, 168px) - 56px));
+        color: #c9c5e0; font-size: calc(12px * var(--site-type, 1)); line-height: 1.7; letter-spacing: 0.3px;
+        text-shadow: 0 1px 2px #000; overflow-wrap: anywhere;
+      }
+      .help b { color: var(--site-accent); font-weight: 600; }
+      @media (max-width: 480px) {
+        .hud { left: 12px; top: 12px; }
+        .controls { right: 12px; top: 50px; }
+        #minimap { right: 12px; bottom: 12px; }
+        .help { left: 12px; bottom: 12px; max-width: max(120px, calc(100vw - var(--map-w, 168px) - 48px)); }
+      }
       .overlay {
         position: fixed; inset: 0; display: flex; flex-direction: column;
         align-items: center; justify-content: center; gap: calc(10px * var(--site-space, 1));
@@ -54,13 +74,13 @@
   </head>
   <body>
     <canvas id="view" width="320" height="180" role="img" aria-label="第一人称迷宫视野，黑暗中只能看到附近墙面"></canvas>
-    <canvas id="minimap" width="168" height="120" role="img" aria-label="小地图，仅显示本局已探索区域"></canvas>
+    <canvas id="minimap" width="210" height="150" role="img" aria-label="小地图，仅显示本局已探索区域"></canvas>
     <div class="hud">用时 <b id="time">0.0s</b> · 探索 <b id="explored">0%</b></div>
     <div class="controls">
       <button id="restart" type="button">重新开始 (R)</button>
       <button id="new-maze" type="button">新迷宫 (N)</button>
     </div>
-    <p class="help"><b>W/S</b> 或 <b>↑/↓</b> 前进后退 · <b>A/D</b> 或 <b>←/→</b> 转向 · 在黑暗中找到旗帜出口</p>
+    <p class="help"><b>W/S</b> 移动 · <b>A/D</b> 转向 · 在黑暗中找到出口</p>
     <div class="overlay" id="overlay" hidden>
       <p class="overlay-title">通关成功</p>
       <p class="overlay-sub" id="overlay-sub"></p>
