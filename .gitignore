@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.qoder/
+*.qoder.site
+.DS_Store
