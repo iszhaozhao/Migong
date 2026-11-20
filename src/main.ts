@@ -1,4 +1,5 @@
 import { MAX_FRAME_DELTA_MS, MINIMAP_TARGET_CSS, RENDER_H, RENDER_W } from './config.ts';
+import { createDecorations } from './decor.ts';
 import { Exploration } from './exploration.ts';
 import { Game, type InputState } from './game.ts';
 import { isWalkable, type Maze } from './maze.ts';
@@ -27,6 +28,7 @@ const newMazeBtn = document.getElementById('new-maze') as HTMLButtonElement;
 
 const game = new Game();
 let exploration = new Exploration(game.maze);
+let decorations = createDecorations(game.maze);
 let mapCell = 8;
 let totalWalkable = countWalkable(game.maze);
 
@@ -87,6 +89,7 @@ function restart(): void {
 function newMaze(): void {
   game.newMaze();
   exploration = new Exploration(game.maze);
+  decorations = createDecorations(game.maze);
   totalWalkable = countWalkable(game.maze);
   layout();
 }
@@ -154,7 +157,7 @@ function frame(now: number): void {
     exploration.update(game.maze, game.x, game.y, game.angle);
   }
 
-  renderView(viewCtx, game);
+  renderView(viewCtx, game, decorations);
   renderMinimap(mapCtx, game.maze, exploration, game, mapCell);
   syncHud();
   syncOverlay();
@@ -173,11 +176,21 @@ newMazeBtn.addEventListener('click', newMaze);
 againBtn.addEventListener('click', newMaze);
 
 if (new URLSearchParams(window.location.search).has('qa')) {
-  (window as unknown as Record<string, unknown>).__qa = { game, get exploration() { return exploration; } };
+  (window as unknown as Record<string, unknown>).__qa = {
+    game,
+    get exploration() { return exploration; },
+    render() {
+      renderView(viewCtx, game, decorations);
+      renderMinimap(mapCtx, game.maze, exploration, game, mapCell);
+      syncHud();
+      syncOverlay();
+    },
+    get decorations() { return decorations; },
+  };
 }
 
 layout();
-renderView(viewCtx, game);
+renderView(viewCtx, game, decorations);
 renderMinimap(mapCtx, game.maze, exploration, game, mapCell);
 syncHud();
 requestAnimationFrame(frame);
