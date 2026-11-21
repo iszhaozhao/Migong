@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="移动迷宫：黑暗中的第一人称像素迷宫探索，手电筒光束、战争迷雾小地图、可开启的大门与局部动态墙。" />
+    <title>移动迷宫 · 第一人称黑暗探索</title>
+    <style>
+      :root {
+        --site-bg: #000000;
+        --site-fg: #cfcbe4;
+        --site-accent: #ffc857;
+        --site-on-accent: #171327;
+        --site-surface: #101018;
+        --site-muted: #8a86a0;
+        --site-border: #26263a;
+        --site-warn: #ff7a5c;
+        --site-font: ui-monospace, "SFMono-Regular", Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+        --site-radius: 0px;
+        --site-space: 1;
+        --site-type: 1;
+      }
+      html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        background: var(--site-bg); color: var(--site-fg);
+        overflow: hidden; overscroll-behavior: none;
+      }
+      body { font-family: var(--site-font); }
+      [hidden] { display: none !important; }
+
+      /* 主画面铺满整个视口：低分辨率缓冲 + 整数像素倍率放大，边缘清晰不拉伸变形 */
+      #view {
+        position: fixed; inset: 0; display: block; width: 100%; height: 100%;
+        background: #000; image-rendering: pixelated; image-rendering: crisp-edges;
+      }
+      #minimap {
+        position: fixed; right: 12px; bottom: 12px; background: #000;
+        border: 1px solid #1c1c26; image-rendering: pixelated; z-index: 3;
+      }
+
+      button {
+        font: inherit; font-size: calc(12px * var(--site-type, 1)); color: var(--site-muted);
+        background: var(--site-surface); border: 1px solid var(--site-border);
+        border-radius: var(--site-radius);
+        padding: calc(5px * var(--site-space, 1)) calc(11px * var(--site-space, 1)); cursor: pointer;
+      }
+      button:hover:not(:disabled) { color: var(--site-fg); border-color: #3a3a55; }
+      button:focus-visible { outline: 1px solid #8b7ff0; outline-offset: 1px; }
+      button:disabled { cursor: not-allowed; opacity: 0.45; }
+      .btn-primary {
+        background: var(--site-accent); border-color: var(--site-accent);
+        color: var(--site-on-accent); font-weight: 700;
+      }
+      .btn-primary:hover:not(:disabled) { color: var(--site-on-accent); border-color: #ffe0a0; }
+
+      .topbar { position: fixed; right: 12px; top: 10px; display: flex; gap: calc(6px * var(--site-space, 1)); z-index: 6; }
+      .hud {
+        position: fixed; left: 12px; top: 10px; z-index: 3; color: var(--site-muted);
+        font-size: calc(11px * var(--site-type, 1)); letter-spacing: 0.5px; text-shadow: 0 1px 0 #000;
+      }
+      .hud b { color: var(--site-fg); font-weight: 600; }
+      .help {
+        position: fixed; left: 12px; bottom: 10px; margin: 0; z-index: 3; color: #55516b;
+        font-size: calc(11px * var(--site-type, 1)); text-shadow: 0 1px 0 #000;
+      }
+      .help b { color: var(--site-muted); font-weight: 600; }
+      .hint {
+        position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); margin: 0; z-index: 3;
+        color: #6f6b88; font-size: calc(11px * var(--site-type, 1)); letter-spacing: 1px;
+        background: rgba(0,0,0,0.55); border: 1px solid #1c1c26; padding: 3px 10px;
+      }
+      .prompt {
+        position: fixed; left: 50%; bottom: 78px; transform: translateX(-50%); margin: 0; z-index: 4;
+        color: var(--site-accent); font-size: calc(14px * var(--site-type, 1)); letter-spacing: 2px;
+        background: rgba(0,0,0,0.72); border: 1px solid #4a3d1c; padding: 5px 14px;
+        text-shadow: 0 0 6px rgba(255,200,87,0.55);
+      }
+
+      /* 主页面与浮层 */
+      .screen, .overlay {
+        position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center;
+        gap: calc(10px * var(--site-space, 1)); padding: calc(16px * var(--site-space, 1));
+      }
+      .screen { background: rgba(0, 0, 0, 0.78); }
+      .overlay { background: rgba(0, 0, 0, 0.86); }
+      .title {
+        margin: 0; color: var(--site-accent); font-size: calc(34px * var(--site-type, 1));
+        letter-spacing: 10px; text-shadow: 0 0 18px rgba(255,200,87,0.25);
+      }
+      .subtitle { margin: 0 0 calc(14px * var(--site-space, 1)); color: var(--site-muted); font-size: calc(12px * var(--site-type, 1)); line-height: 1.9; letter-spacing: 1px; }
+      .overlay-title { margin: 0; color: var(--site-accent); font-size: calc(26px * var(--site-type, 1)); letter-spacing: 6px; }
+      .overlay-sub { margin: 0; color: var(--site-muted); font-size: calc(12px * var(--site-type, 1)); line-height: 1.9; }
+      .menu-entry { display: flex; flex-direction: column; gap: calc(8px * var(--site-space, 1)); min-width: 260px; }
+      .menu-entry button { font-size: calc(14px * var(--site-type, 1)); padding: calc(9px * var(--site-space, 1)) calc(18px * var(--site-space, 1)); }
+      .diff-panel {
+        margin-top: calc(6px * var(--site-space, 1)); display: flex; flex-direction: column;
+        gap: calc(6px * var(--site-space, 1)); min-width: 300px;
+        border: 1px solid var(--site-border); background: rgba(16,16,24,0.92); padding: calc(12px * var(--site-space, 1));
+      }
+      .diff-panel h2 { margin: 0 0 calc(4px * var(--site-space, 1)); color: var(--site-fg); font-size: calc(12px * var(--site-type, 1)); letter-spacing: 3px; font-weight: 600; }
+      .diff-panel button { text-align: left; }
+      .diff-panel .tag { float: right; color: #55516b; font-size: calc(10px * var(--site-type, 1)); }
+      .overlay-row { display: flex; gap: calc(8px * var(--site-space, 1)); margin-top: calc(6px * var(--site-space, 1)); }
+      .menu-foot { margin-top: calc(18px * var(--site-space, 1)); color: #4c4863; font-size: calc(10px * var(--site-type, 1)); letter-spacing: 1px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="view" role="img" aria-label="第一人称迷宫视野，手电筒只照亮附近墙面"></canvas>
+    <canvas id="minimap" role="img" aria-label="小地图，仅显示本局已探索区域与手电筒光束" hidden></canvas>
+
+    <div class="hud" id="hud" hidden>
+      <b id="level-label">第 1 关 · 简单</b> · 用时 <b id="time">0.0s</b> · 探索 <b id="explored">0%</b>
+    </div>
+
+    <div class="topbar">
+      <button id="music-toggle" type="button" aria-pressed="true">音乐开</button>
+      <button id="fullscreen" type="button">全屏</button>
+      <button id="restart" type="button" hidden>重开 (R)</button>
+      <button id="home" type="button" hidden>主页面</button>
+    </div>
+
+    <p class="help" id="help" hidden>
+      <b>W/S</b> 前进后退 · <b>A/D</b> 或 <b>←/→</b> 转向 · <b>鼠标</b> 视角 · <b>E</b> 开门 · <b>Esc</b> 暂停
+    </p>
+    <p class="hint" id="hint" hidden>点击画面锁定鼠标视角</p>
+    <p class="prompt" id="prompt" hidden>按 E 开门</p>
+
+    <div class="screen" id="screen-menu">
+      <h1 class="title">移动迷宫</h1>
+      <p class="subtitle">黑暗中举起手电筒，找到尽头那扇门</p>
+      <div class="menu-entry">
+        <button id="btn-difficulty" type="button" aria-expanded="false">难度选择</button>
+        <button id="btn-quick" type="button" class="btn-primary">快速开始</button>
+      </div>
+      <div class="diff-panel" id="diff-panel" hidden>
+        <h2>选择难度</h2>
+        <button type="button" data-diff="easy">简单 · 静态迷宫<span class="tag">可玩</span></button>
+        <button type="button" data-diff="medium">中等 · 局部动态墙<span class="tag">可玩</span></button>
+        <button type="button" data-diff="hard" disabled>困难 · 动态墙 + 士兵<span class="tag">开发中</span></button>
+      </div>
+      <p class="menu-foot">第一人称像素迷宫原型 · 无外部素材 · 音乐由 Web Audio 实时合成</p>
+    </div>
+
+    <div class="overlay" id="overlay-pause" hidden>
+      <p class="overlay-title">已暂停</p>
+      <p class="overlay-sub" id="pause-sub">Esc 释放鼠标后暂停</p>
+      <button class="btn-primary" id="resume" type="button">点击继续探索</button>
+      <div class="overlay-row">
+        <button id="pause-home" type="button">返回主页面</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay-won" hidden>
+      <p class="overlay-title">大门已打开</p>
+      <p class="overlay-sub" id="won-sub"></p>
+      <div class="overlay-row">
+        <button class="btn-primary" id="next-level" type="button">下一关</button>
+        <button id="won-home" type="button">返回主页面</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
